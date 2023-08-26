@@ -21,7 +21,7 @@ func Login(c *gin.Context) {
 	user := models.User{Username: username}
 
 	// error retrieving user, user doesn't exist
-	if err := utils.DB.First(&user); err != nil {
+	if err := utils.DB.First(&user).Error; err != nil {
 		response := loginResponse{StatusCode: -1}
 		c.JSON(http.StatusUnauthorized, response)
 		return
