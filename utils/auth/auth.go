@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"douyin/models"
 	"douyin/utils"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -19,7 +20,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		} else {
-			ok, err := handleToken(token)
+			ok, _, err := handleToken(token)
 			if err != nil {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 				c.Abort()
@@ -38,7 +39,8 @@ func AuthMiddleware() gin.HandlerFunc {
 }
 
 // handleToken handle token for authMiddleware
-func handleToken(token string) (bool, error) {
+// return the validity of the token, username, and error
+func handleToken(token string) (bool, string, error) {
 	ctx := context.Background()
 	parsedToken, err := jwt.Parse(
 		token,
@@ -54,17 +56,17 @@ func handleToken(token string) (bool, error) {
 	}
 	tokenStored, err := utils.Client.Get(ctx, username).Result()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 	if tokenStored == token {
-		return true, nil
+		return true, "", nil
 	} else {
-		return false, nil
+		return false, "", nil
 	}
 
 }
 
-// SetToken sets token during login or registration
+// SetToken sets token during login or registration.
 func SetToken(username string) (string, error) {
 	ctx := context.Background()
 	newToken := jwt.New(jwt.SigningMethodHS256)
@@ -92,4 +94,22 @@ func SetToken(username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func getUserFromToken(token string) (models.User, error) {
+	ok, username, err := handleToken(token)
+	if err != nil {
+		return models.User{}, err
+	} else if !ok {
+		return models.User{}, nil
+	} else {
+		user := models.User{Username: username}
+
+		// error retrieving user, user doesn't exist
+		if err := utils.DB.First(&user).Error; err != nil {
+			return models.User{}, err
+		} else {
+			return user, nil
+		}
+	}
 }
