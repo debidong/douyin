@@ -45,7 +45,7 @@ func Login(c *gin.Context) {
 	}
 	response := loginResponse{
 		StatusCode: 0,
-		UserId:     user.UID,
+		UserId:     user.UserId,
 		Token:      token,
 	}
 

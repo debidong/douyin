@@ -27,13 +27,13 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, response)
 	}
 
-	// Generate UID (random string with length = 64)
+	// Generate UserId (random string with length = 64)
 	uid := rand.Int63()
 
 	user := models.User{
 		Username: username,
 		Password: string(hashedPassword),
-		UID:      uid,
+		UserId:   uid,
 	}
 	utils.DB.Create(&user)
 

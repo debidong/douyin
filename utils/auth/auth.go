@@ -12,14 +12,14 @@ import (
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.PostForm("token")
-		username := c.PostForm("username")
+		//username := c.PostForm("username")
 
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return
 		} else {
-			ok, _, err := handleToken(token, username)
+			ok, err := handleToken(token)
 			if err != nil {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 				c.Abort()
@@ -37,75 +37,59 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-// handleToken sets or parses token for a specific user
-func handleToken(token string, username string) (bool, string, error) {
+// handleToken handle token for authMiddleware
+func handleToken(token string) (bool, error) {
 	ctx := context.Background()
-	// if token is empty string, create a new token
-	if token == "" {
-		newToken := jwt.New(jwt.SigningMethodHS256)
-		claims := newToken.Claims.(jwt.MapClaims)
+	parsedToken, err := jwt.Parse(
+		token,
+		func(token *jwt.Token) (interface{}, error) {
+			return utils.JwtSecretKey, nil
+		})
 
-		//claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
-		claims["sub"] = username
-		secret := []byte(utils.JwtSecretKey)
-		tokenString, err := newToken.SignedString(secret)
-		if err != nil {
-			fmt.Println(err)
-			return false, "", err
-		}
-		pong, err := utils.Client.Ping(ctx).Result()
-		if err != nil {
-			fmt.Println("Error pinging Redis:", err)
-			return false, "", err
-		}
-		fmt.Println("Connected to Redis:", pong)
-
-		err = utils.Client.Set(ctx, username, tokenString, 0).Err()
-		if err != nil {
-			fmt.Println("Error setting key:", err)
-			return false, "", err
-		}
-		return true, tokenString, nil
-		// else, parse token
-	} else {
-		tokenStored, err := utils.Client.Get(ctx, username).Result()
-		if err != nil {
-			return false, "", fmt.Errorf("error getting key: %w", err)
-		} else {
-			parsedToken, err := jwt.Parse(
-				tokenStored,
-				func(token *jwt.Token) (interface{}, error) {
-					return utils.JwtSecretKey, nil
-				})
-
-			if err != nil {
-				return false, "", err
-			}
-
-			if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
-				if token == tokenStored {
-					fmt.Println("User logged in: ", claims["sub"])
-					return true, token, nil
-				} else {
-					// token in request != token in db
-					return false, "", nil
-				}
-			} else {
-				return false, "", nil
-			}
+	var username string
+	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
+		if ok {
+			username = claims["sub"].(string)
 		}
 	}
+	tokenStored, err := utils.Client.Get(ctx, username).Result()
+	if err != nil {
+		return false, err
+	}
+	if tokenStored == token {
+		return true, nil
+	} else {
+		return false, nil
+	}
+
 }
 
+// SetToken sets token during login or registration
 func SetToken(username string) (string, error) {
-	ok, token, err := handleToken("", username)
+	ctx := context.Background()
+	newToken := jwt.New(jwt.SigningMethodHS256)
+	claims := newToken.Claims.(jwt.MapClaims)
+
+	//claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
+	claims["sub"] = username
+	secret := []byte(utils.JwtSecretKey)
+	tokenString, err := newToken.SignedString(secret)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
-	} else if !ok {
-		return "", nil
-	} else {
-		return token, nil
+	}
+	pong, err := utils.Client.Ping(ctx).Result()
+	if err != nil {
+		fmt.Println("Error pinging Redis:", err)
+		return "", err
+	}
+	fmt.Println("Connected to Redis:", pong)
+
+	err = utils.Client.Set(ctx, username, tokenString, 0).Err()
+	if err != nil {
+		fmt.Println("Error setting key:", err)
+		return "", err
 	}
 
+	return tokenString, nil
 }
