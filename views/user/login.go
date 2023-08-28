@@ -3,6 +3,8 @@ package user
 import (
 	"douyin/models"
 	"douyin/utils"
+	"douyin/utils/auth"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -35,10 +37,16 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	token, err := auth.SetToken(username)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	response := loginResponse{
 		StatusCode: 0,
 		UserId:     user.UID,
-		Token:      "test",
+		Token:      token,
 	}
 
 	c.JSON(http.StatusOK, response)

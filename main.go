@@ -1,6 +1,7 @@
 package main
 
 import (
+	"douyin/controllers"
 	"douyin/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -8,9 +9,12 @@ import (
 
 func main() {
 	fmt.Println("Service starting.")
+
 	utils.InitDB()
+	utils.InitRedis()
+
 	r := gin.Default()
-	initRouter(r)
+	controllers.InitRouter(r)
 	err := r.Run()
 	if err != nil {
 		return
