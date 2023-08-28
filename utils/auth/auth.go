@@ -96,7 +96,7 @@ func SetToken(username string) (string, error) {
 	return tokenString, nil
 }
 
-func getUserFromToken(token string) (models.User, error) {
+func GetUserFromToken(token string) (models.User, error) {
 	ok, username, err := handleToken(token)
 	if err != nil {
 		return models.User{}, err
