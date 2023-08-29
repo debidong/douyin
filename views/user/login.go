@@ -17,15 +17,15 @@ type loginResponse struct {
 }
 
 func Login(c *gin.Context) {
-	username := c.PostForm("username")
-	password := c.PostForm("password")
+	username := c.Query("username")
+	password := c.Query("password")
 
 	user := models.User{Username: username}
 
 	// error retrieving user, user doesn't exist
 	if err := utils.DB.First(&user).Error; err != nil {
 		response := loginResponse{StatusCode: -1}
-		c.JSON(http.StatusUnauthorized, response)
+		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
