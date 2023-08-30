@@ -38,7 +38,7 @@ func Info(c *gin.Context) {
 		fmt.Println(err)
 		return
 	}
-
+	fmt.Println(userId)
 	// find the user whose userId == user_id
 	queryUser := models.User{UserId: userId}
 	if err := utils.DB.First(&queryUser).Error; err != nil {
@@ -52,7 +52,7 @@ func Info(c *gin.Context) {
 
 	// get the current user
 	var isSubscriber bool
-	user, err := auth.GetUserFromToken(c.PostForm("token"))
+	user, err := auth.GetUserFromToken(c.Query("token"))
 	if err != nil {
 		fmt.Println(err)
 		response := userInfoResponse{

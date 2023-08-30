@@ -7,5 +7,5 @@ func InitRouter(r *gin.Engine) {
 	apiRouter := r.Group("/douyin")
 	apiRouter.POST("/user/register/", user.Register)
 	apiRouter.POST("user/login/", user.Login)
-	apiRouter.GET("/user/:user_id/", user.Info)
+	apiRouter.GET("/user/", user.Info)
 }

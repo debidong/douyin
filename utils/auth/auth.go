@@ -45,9 +45,9 @@ func handleToken(token string) (bool, string, error) {
 	parsedToken, err := jwt.Parse(
 		token,
 		func(token *jwt.Token) (interface{}, error) {
-			return utils.JwtSecretKey, nil
+			return []byte(utils.JwtSecretKey), nil
 		})
-
+	fmt.Println(parsedToken)
 	var username string
 	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
 		if ok {
