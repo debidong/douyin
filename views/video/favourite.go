@@ -27,20 +27,9 @@ import (
 //required string title = 8; // 视频标题
 //}
 
-type favouriteListResponse struct {
+type favouriteVideoListResponse struct {
 	StatusCode int32           `json:"status_code"`
 	VideoList  []videoResponse `json:"video_list"`
-}
-
-type videoResponse struct {
-	VideoID        int64             `json:"id"`
-	Author         user.UserResponse `json:"author"`
-	PlayUrl        string            `json:"play_url"`
-	CoverUrl       string            `json:"cover_url"`
-	FavouriteCount int64             `json:"favourite_count"`
-	CommentCount   int64             `json:"comment_count"`
-	IsFavourite    bool              `json:"is_favourite"`
-	Title          string            `json:"title"`
 }
 
 func GetFavouriteVideo(c *gin.Context) {
@@ -55,25 +44,25 @@ func GetFavouriteVideo(c *gin.Context) {
 	queryUser := models.User{UserId: userId}
 
 	if err := utils.DB.First(&queryUser).Error; err != nil {
-		response := favouriteListResponse{StatusCode: -1}
+		response := favouriteVideoListResponse{StatusCode: -1}
 		c.JSON(http.StatusNotFound, response)
 		return
 	}
 
 	var videoList []videoResponse
 
-	for _, favouriteVideoPointer := range queryUser.FavouriteVideos {
-		favouriteVideo := *favouriteVideoPointer
+	for _, VideoPointer := range queryUser.FavouriteVideos {
+		favouriteVideo := *VideoPointer
 		video := models.Video{VideoID: favouriteVideo.VideoID}
 		if err := utils.DB.First(&video).Error; err != nil {
-			response := favouriteListResponse{StatusCode: -1}
+			response := favouriteVideoListResponse{StatusCode: -1}
 			c.JSON(http.StatusNotFound, response)
 			return
 		}
 
 		author := models.User{UserId: video.AuthorID}
 		if err := utils.DB.First(&author).Error; err != nil {
-			response := favouriteListResponse{StatusCode: -1}
+			response := favouriteVideoListResponse{StatusCode: -1}
 			c.JSON(http.StatusNotFound, response)
 			return
 		}
@@ -98,11 +87,11 @@ func GetFavouriteVideo(c *gin.Context) {
 		videoList = append(videoList, videoResponse)
 	}
 
-	favouriteListResponse := favouriteListResponse{
+	favouriteVideoListResponse := favouriteVideoListResponse{
 		VideoList:  videoList,
 		StatusCode: 0,
 	}
 
-	c.JSON(http.StatusOK, favouriteListResponse)
+	c.JSON(http.StatusOK, favouriteVideoListResponse)
 	return
 }

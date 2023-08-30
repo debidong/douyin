@@ -14,4 +14,6 @@ func InitRouter(r *gin.Engine) {
 	apiRouter.GET("/user/", user.Info)
 
 	apiRouter.GET("/favorite/list", video.GetFavouriteVideo)
+	apiRouter.GET("/publish/list", video.GetPublishedVideo)
+
 }

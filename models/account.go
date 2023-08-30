@@ -11,5 +11,5 @@ type User struct {
 	Subscribers     []*User `gorm:"many2many:user_subscribers"`
 	Followers       []*User `gorm:"many2many:user_followers"`
 	FavouriteVideos []*FavouriteVideo
-	//PublishedVideos []*Video // `gorm:"one2many:user_video"`
+	PublishedVideos []*PublishedVideo
 }
