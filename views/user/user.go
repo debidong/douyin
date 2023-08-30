@@ -12,7 +12,7 @@ import (
 
 // user struct only for the response of userInfo,
 // not the user struct in models/accounts.gp
-type userResponse struct {
+type UserResponse struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
 	//followCount     int64
@@ -27,7 +27,7 @@ type userResponse struct {
 
 type userInfoResponse struct {
 	StatusCode int32        `json:"status_code"`
-	User       userResponse `json:"user"`
+	User       UserResponse `json:"user"`
 }
 
 func Info(c *gin.Context) {
@@ -57,7 +57,7 @@ func Info(c *gin.Context) {
 		fmt.Println(err)
 		response := userInfoResponse{
 			StatusCode: -1,
-			User:       userResponse{},
+			User:       UserResponse{},
 		}
 		c.JSON(http.StatusUnauthorized, response)
 		return
@@ -76,7 +76,7 @@ func Info(c *gin.Context) {
 	}
 	response := userInfoResponse{
 		StatusCode: 0,
-		User: userResponse{
+		User: UserResponse{
 			Id:       userId,
 			Name:     queryUser.Username,
 			IsFollow: isSubscriber,

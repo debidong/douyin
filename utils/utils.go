@@ -2,6 +2,7 @@ package utils
 
 import (
 	"douyin/models"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -20,7 +21,11 @@ func InitDB() {
 	}
 
 	DB = database
-	DB.AutoMigrate(&models.User{})
+	err = DB.AutoMigrate(&models.User{})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 func InitRedis() {

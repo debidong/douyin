@@ -7,7 +7,9 @@ type User struct {
 	Username string `gorm:"unique;not null;primary_Key"`
 	UserId   int64  `gorm:"unique;not null"`
 	//Email       string  `gorm:"unique;not null"`
-	Password    string  `gorm:"not null"`
-	Subscribers []*User `gorm:"many2many:user_subscribers"`
-	Followers   []*User `gorm:"many2many:user_followers"`
+	Password        string  `gorm:"not null"`
+	Subscribers     []*User `gorm:"many2many:user_subscribers"`
+	Followers       []*User `gorm:"many2many:user_followers"`
+	FavouriteVideos []*FavouriteVideo
+	//PublishedVideos []*Video // `gorm:"one2many:user_video"`
 }
