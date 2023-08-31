@@ -59,7 +59,7 @@ func handleToken(token string) (bool, string, error) {
 		return false, "", err
 	}
 	if tokenStored == token {
-		return true, "", nil
+		return true, username, nil
 	} else {
 		return false, "", nil
 	}

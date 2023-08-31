@@ -41,8 +41,8 @@ func Info(c *gin.Context) {
 	}
 	fmt.Println(userId)
 	// find the user whose userId == user_id
-	queryUser := models.User{UserId: userId}
-	if err := utils.DB.First(&queryUser).Error; err != nil {
+	var queryUser models.User
+	if err := utils.DB.Where("user_id = ?", userId).First(&queryUser).Error; err != nil {
 		response := userInfoResponse{
 			StatusCode: -1,
 		}
@@ -53,7 +53,8 @@ func Info(c *gin.Context) {
 
 	// get the current user
 	var isSubscriber bool
-	user, err := auth.GetUserFromToken(c.Query("token"))
+	token := c.Query("token")
+	user, err := auth.GetUserFromToken(token)
 	if err != nil {
 		fmt.Println(err)
 		response := userInfoResponse{
