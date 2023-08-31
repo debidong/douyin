@@ -2,24 +2,22 @@ package relation
 
 import (
 	"douyin/models"
-	"douyin/utils"
 	"douyin/utils/auth"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-type friendListResponse struct {
+type FriendListResponse struct {
 	StatusCode int32         `json:"status_code"`
 	StatusMsg  string        `json:"status_msg"`
-	FriendList []models.User `json:"user_list"`
+	FriendUser []models.User `json:"user_list"`
 }
 
 func FriendList(c *gin.Context) {
 	// get token
 	token := c.Query("token")
-	userId := c.Query("user_id")
-	username, err := auth.GetUserFromToken("token")
+	username, err := auth.GetUserFromToken(token)
 	if err != nil {
 		resp := followListResponse{
 			StatusCode: 1,
@@ -28,19 +26,15 @@ func FriendList(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, resp)
 	}
-	fmt.Println(userId)
+	id := c.Query("user_id")
+	fmt.Println(id)
 	fmt.Println(username)
 	fmt.Println(token)
-	var userList []models.User
-	if err := utils.DB.Find(&userList).Error; err != nil {
-		response := friendListResponse{StatusCode: -2}
-		c.JSON(http.StatusUnauthorized, response)
-		return
-	}
-	resp := friendListResponse{
+	resp := followListResponse{
 		StatusCode: 0,
 		StatusMsg:  "查询成功",
-		FriendList: userList,
+		UserList:   nil,
 	}
 	c.JSON(http.StatusOK, resp)
+
 }
