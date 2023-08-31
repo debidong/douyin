@@ -13,10 +13,11 @@ import (
 // user struct only for the response of userInfo,
 // not the user struct in models/accounts.gp
 type UserResponse struct {
-	Id   int64  `json:"id"`
-	Name string `json:"name"`
-	//followCount     int64
-	IsFollow bool `json:"is_follow"`
+	Id            int64  `json:"id"`
+	Name          string `json:"name"`
+	FollowCount   int64  `json:"follow_count"`
+	FollowerCount int64  `json:"follower_count"`
+	IsFollow      bool   `json:"is_follow"`
 	//avatar          string
 	//backgroundImage string
 	//signature       string

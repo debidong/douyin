@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"douyin/views/relation"
 	"douyin/views/video"
 	"github.com/gin-gonic/gin"
 )
@@ -15,5 +16,7 @@ func InitRouter(r *gin.Engine) {
 
 	apiRouter.GET("/favorite/list", video.GetFavouriteVideo)
 	apiRouter.GET("/publish/list", video.GetPublishedVideo)
+
+	apiRouter.POST("/relation/action", relation.Action)
 
 }
