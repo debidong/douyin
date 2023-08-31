@@ -3,10 +3,12 @@ package utils
 import (
 	"douyin/models"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"strconv"
 )
 
 var DB *gorm.DB
@@ -34,4 +36,17 @@ func InitRedis() {
 		Password: "",
 		DB:       0,
 	})
+}
+
+func ParseParamToInt(c *gin.Context, paramName string) (int, error) {
+	paramStr := c.Query(paramName)
+	return ParseStringToInt(paramStr)
+}
+
+func ParseStringToInt(str string) (int, error) {
+	paramInt, err := strconv.Atoi(str)
+	if err != nil {
+		return 0, fmt.Errorf("无效的 %s 参数", paramInt)
+	}
+	return paramInt, nil
 }
