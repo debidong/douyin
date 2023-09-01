@@ -53,7 +53,7 @@ func FollowList(c *gin.Context) {
 
 	// 根据userid查询出所有的关注者id
 	var followIDs []int64
-	if err = utils.DB.Table("user_followers").Select("user_id").Where("follower_id = ?", userID).
+	if err = utils.DB.Table("user_followers").Select("user_id").Where("follower_id = ? and is_delete = ?", userID, 0).
 		Find(&followIDs).Error; err != nil {
 		resp := followerListResponse{
 			StatusCode: 1,

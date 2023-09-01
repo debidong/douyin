@@ -5,12 +5,19 @@ import (
 	"douyin/utils/auth"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 )
 
 type actionResponse struct {
 	StatusCode int32  `json:"status_code"`
 	StatusMsg  string `json:"status_msg"`
+}
+
+type userFollower struct {
+	UserID     int64 `json:"user_id"`
+	FollowerID int64 `json:"follower_id"`
+	IsDelete   int64 `json:"is_delete"`
 }
 
 func Action(c *gin.Context) {
@@ -29,45 +36,86 @@ func Action(c *gin.Context) {
 	// get to_user_id from request
 	toUserId, err := utils.ParseParamToInt(c, "to_user_id")
 	if err != nil {
-		// todo:
+		resp := actionResponse{
+			StatusCode: 1,
+			StatusMsg:  "参数转换失败，传递信息错误",
+		}
+		c.JSON(http.StatusInternalServerError, resp)
 		return
 	}
 	actionType, err := utils.ParseParamToInt(c, "action_type")
 	if err != nil {
-		// todo:
+		resp := actionResponse{
+			StatusCode: 1,
+			StatusMsg:  "参数转换失败，传递信息错误",
+		}
+		c.JSON(http.StatusInternalServerError, resp)
 		return
 	}
 
-	fmt.Println(toUserId)
-	fmt.Println(user)
-	fmt.Println(actionType)
-
 	if actionType == 1 {
-		// 自己的关注列表 follow
-		//userFollow := UserFollow{
-		//	UserID:         user.UserId,
-		//	FollowID:       int64(toUserId),
-		//	FollowUsername: "hh",
-		//}
-		//utils.DB.Save(userFollow)
+		// 1为关注选项
+		uf := userFollower{
+			UserID:     int64(toUserId),
+			FollowerID: user.UserId,
+		}
+		result := utils.DB.First(&uf, "is_delete = ?", 1)
+		if result.Error == gorm.ErrRecordNotFound {
+			// 记录不存在，表示一定是没创建过
+			uf.IsDelete = 0
+			err = utils.DB.Create(&uf).Error
+			if err != nil {
+				resp := actionResponse{
+					StatusCode: 1,
+					StatusMsg:  "记录不存在，但插入失败",
+				}
+				c.JSON(http.StatusInternalServerError, resp)
+				return
+			}
+		} else {
+			uf.IsDelete = 0
+			if err = utils.DB.Table("user_followers").Where("user_id = ?", toUserId).Where("follower_id = ?", user.UserId).Update("is_delete", 0).Error; err != nil {
+				fmt.Println(err)
+				resp := actionResponse{
+					StatusCode: 1,
+					StatusMsg:  "数据库已有数据，为删除数据，但更新失败",
+				}
+				c.JSON(http.StatusInternalServerError, resp)
+				return
+			}
 
-		// 自己的关注数量+1
+		}
 
-		// 对应的人的粉丝列表 follower
-
-		// 对应的人的粉丝数量 + 1
-
+		// 使用Redis维护关注数量和粉丝数量
+		// todo
+		resp := actionResponse{
+			StatusCode: 1,
+			StatusMsg:  "关注成功",
+		}
+		c.JSON(http.StatusOK, resp)
 	} else if actionType == 2 {
+		// 2为取消关注
+		if err = utils.DB.Table("user_followers").Where("user_id = ? and follower_id = ?", int64(toUserId), user.UserId).Update("is_delete", 1).Error; err != nil {
+			resp := actionResponse{
+				StatusCode: 1,
+				StatusMsg:  "数据库更新失败",
+			}
+			c.JSON(http.StatusInternalServerError, resp)
+			return
+		}
+		resp := actionResponse{
+			StatusCode: 1,
+			StatusMsg:  "取消成功",
+		}
+		c.JSON(http.StatusOK, resp)
 
-		// 自己的关注列表 follow 标志位 -1
-
-		// 自己的关注数量-1
-
-		// 对应的人的粉丝列表 follower 标志位 -1
-
-		// 对应的人的粉丝数量 - 1
 	} else {
 		// 参数不合法
+		resp := actionResponse{
+			StatusCode: 1,
+			StatusMsg:  "参数不合法",
+		}
+		c.JSON(http.StatusInternalServerError, resp)
 	}
 
 }

@@ -13,13 +13,6 @@ type followerListResponse struct {
 	UserList   []User `json:"user_list"`
 }
 
-type UserFollower struct {
-	ID               int64  `json:"id"`
-	UserID           int64  `json:"user_id"`
-	FollowerID       int64  `json:"follower_id"`
-	FollowerUsername string `json:"follower_username"`
-}
-
 func FollowerList(c *gin.Context) {
 	// get token
 	token := c.Query("token")
@@ -47,7 +40,7 @@ func FollowerList(c *gin.Context) {
 
 	// 查询对应的followerIDs
 	var followerIDs []int64
-	if err = utils.DB.Table("user_followers").Select("follower_id").Where("user_id = ?", userID).Find(&followerIDs).Error; err != nil {
+	if err = utils.DB.Table("user_followers").Select("follower_id").Where("user_id = ? and is_delete = ?", userID, 0).Find(&followerIDs).Error; err != nil {
 		resp := followerListResponse{
 			StatusCode: 1,
 			StatusMsg:  "数据库中未找到对应数据",
@@ -67,6 +60,23 @@ func FollowerList(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, resp)
 		return
+	}
+
+	// 还需要查出粉丝是否是关注状态
+	for index := range followers {
+		var count int64
+		if err = utils.DB.Table("user_followers").Where("user_id = (?) and follower_id = (?) and is_delete = ?", followers[index].UserID, userID, 0).Count(&count).Error; err != nil {
+			resp := followerListResponse{
+				StatusCode: 1,
+				StatusMsg:  "查询失败，后段错误",
+				UserList:   nil,
+			}
+			c.JSON(http.StatusInternalServerError, resp)
+			return
+		}
+		if count >= 1 {
+			followers[index].IsFollow = true
+		}
 	}
 
 	resp := followerListResponse{
