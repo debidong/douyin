@@ -32,33 +32,47 @@ func FollowerList(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, resp)
 	}
-	userId, err := utils.ParseParamToInt(c, "user_id")
-	// todo
 
-	var followers []UserFollower
-	utils.DB.Table("user").Where("user_id = ?", userId).Find(&followers)
-
-	var userFollowerResponses []User
-	var userList []User
-	for _, follower := range followers {
-		userList = append(userFollowerResponses, User{
-			ID:              follower.FollowerID,
-			Name:            follower.FollowerUsername,
-			FollowCount:     0,
-			FollowerCount:   0,
-			IsFollow:        false,
-			Avatar:          "",
-			BackgroundImage: "",
-			Signature:       "",
-			TotalFavorited:  0,
-			WorkCount:       0,
-			FavoriteCount:   0,
-		})
+	// 验证参数是否和token对应相同
+	var userID int
+	if userID, err = utils.ParseParamToInt(c, "user_id"); err != nil {
+		resp := followerListResponse{
+			StatusCode: 1,
+			StatusMsg:  "参数转换失败，传递信息错误",
+			UserList:   nil,
+		}
+		c.JSON(http.StatusInternalServerError, resp)
+		return
 	}
+
+	// 查询对应的followerIDs
+	var followerIDs []int64
+	if err = utils.DB.Table("user_followers").Select("follower_id").Where("user_id = ?", userID).Find(&followerIDs).Error; err != nil {
+		resp := followerListResponse{
+			StatusCode: 1,
+			StatusMsg:  "数据库中未找到对应数据",
+			UserList:   nil,
+		}
+		c.JSON(http.StatusInternalServerError, resp)
+		return
+	}
+
+	// 查询出user_id 对应的全部粉丝
+	var followers []User
+	if err = utils.DB.Table("users").Where("user_id in (?)", followerIDs).Find(&followers).Error; err != nil {
+		resp := followerListResponse{
+			StatusCode: 1,
+			StatusMsg:  "数据库中未找到对应数据",
+			UserList:   nil,
+		}
+		c.JSON(http.StatusInternalServerError, resp)
+		return
+	}
+
 	resp := followerListResponse{
 		StatusCode: 0,
 		StatusMsg:  "查询成功",
-		UserList:   userList,
+		UserList:   followers,
 	}
 	c.JSON(http.StatusOK, resp)
 
