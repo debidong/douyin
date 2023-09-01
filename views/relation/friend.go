@@ -34,7 +34,7 @@ func FriendList(c *gin.Context) {
 	}
 	userId, err := utils.ParseParamToInt(c, "user_id")
 
-	//获取该用户关注的对象ID
+	//获取该用户的粉丝ID
 	var followerId []int64
 	if err := utils.DB.Table("user_followers").Select("follower_id").
 		Where("user_id = ?", userId).Find(&followerId).Error; err != nil {
@@ -43,10 +43,10 @@ func FriendList(c *gin.Context) {
 		return
 	}
 
-	//用关注对象id查follower获取好友（互关为好友
+	//用粉丝id查subscribers获取好友（互关为好友
 	var friendId []int64
-	if err := utils.DB.Table("user_followers").Select("user_id").Where("user_id in (?)", followerId).
-		Where("follower_id = ?", userId).Find(&friendId).Error; err != nil {
+	if err := utils.DB.Table("user_subscribers").Select("subscriber_id").Where("subscriber_id in (?)", followerId).
+		Where("user_id = ?", userId).Find(&friendId).Error; err != nil {
 		response := friendListResponse{StatusCode: -1}
 		c.JSON(http.StatusNotFound, response)
 		return
