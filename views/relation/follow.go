@@ -3,7 +3,6 @@ package relation
 import (
 	"douyin/utils"
 	"douyin/utils/auth"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -15,8 +14,8 @@ type followListResponse struct {
 }
 
 type User struct {
-	ID              int64  `json:"id"`
-	Name            string `json:"name"`
+	UserID          int64  `json:"id"`
+	Username        string `json:"name"`
 	FollowCount     int64  `json:"follow_count"`
 	FollowerCount   int64  `json:"follower_count"`
 	IsFollow        bool   `json:"is_follow"`
@@ -28,17 +27,10 @@ type User struct {
 	FavoriteCount   int64  `json:"favorite_count"`
 }
 
-type UserFollow struct {
-	ID             int64  `json:"id"`
-	UserID         int64  `json:"user_id"`
-	FollowID       int64  `json:"follow_id"`
-	FollowUsername string `json:"follow_username"`
-}
-
 func FollowList(c *gin.Context) {
 	// get token
 	token := c.Query("token")
-	user, err := auth.GetUserFromToken(token)
+	_, err := auth.GetUserFromToken(token)
 	if err != nil {
 		resp := followListResponse{
 			StatusCode: 1,
@@ -46,41 +38,54 @@ func FollowList(c *gin.Context) {
 			UserList:   nil,
 		}
 		c.JSON(http.StatusInternalServerError, resp)
+		return
 	}
-	userId, err := utils.ParseParamToInt(c, "user_id")
-	//todo
+	var userID int
+	if userID, err = utils.ParseParamToInt(c, "user_id"); err != nil {
+		resp := followListResponse{
+			StatusCode: 1,
+			StatusMsg:  "参数转换失败，传递信息错误",
+			UserList:   nil,
+		}
+		c.JSON(http.StatusInternalServerError, resp)
+		return
+	}
 
-	fmt.Println(userId)
-	fmt.Println(user)
-	fmt.Println(token)
+	// 根据userid查询出所有的关注者id
+	var followIDs []int64
+	if err = utils.DB.Table("user_followers").Select("user_id").Where("follower_id = ?", userID).
+		Find(&followIDs).Error; err != nil {
+		resp := followerListResponse{
+			StatusCode: 1,
+			StatusMsg:  "数据库中未找到对应数据",
+			UserList:   nil,
+		}
+		c.JSON(http.StatusInternalServerError, resp)
+		return
+	}
 
-	// 根据userid查询出所有的
-	var userFollows []UserFollow
-	utils.DB.Table("users").Where("user_id = ?", userId).Find(&userFollows)
+	// 根据所有的关注者id，查询user全部信息
+	var followUsers []User
+	if err := utils.DB.Table("users").Where("user_id in (?)", followIDs).
+		Find(&followUsers).Error; err != nil {
+		resp := followerListResponse{
+			StatusCode: 1,
+			StatusMsg:  "数据库中未找到对应数据",
+			UserList:   nil,
+		}
+		c.JSON(http.StatusInternalServerError, resp)
+		return
+	}
 
-	var userFollowResponses []User
-	var resultList []User
-	for _, userFollow := range userFollows {
-		resultList = append(userFollowResponses, User{
-			ID:              userFollow.FollowID,
-			Name:            userFollow.FollowUsername,
-			FollowCount:     0,
-			FollowerCount:   0,
-			IsFollow:        true,
-			Avatar:          "",
-			BackgroundImage: "",
-			Signature:       "",
-			TotalFavorited:  0,
-			WorkCount:       0,
-			FavoriteCount:   0,
-		})
+	// 封装返回类型
+	for i := range followUsers {
+		followUsers[i].IsFollow = true
 	}
 
 	resp := followListResponse{
 		StatusCode: 0,
 		StatusMsg:  "查询成功",
-		UserList:   resultList,
+		UserList:   followUsers,
 	}
 	c.JSON(http.StatusOK, resp)
-
 }
