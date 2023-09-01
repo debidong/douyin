@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
 	"net/http"
+	"time"
 )
 
 type registerResponse struct {
@@ -28,6 +29,7 @@ func Register(c *gin.Context) {
 	}
 
 	// Generate UserId (random string with length = 64)
+	rand.Seed(time.Now().UnixNano())
 	uid := rand.Int63()
 
 	user := models.User{
@@ -36,6 +38,16 @@ func Register(c *gin.Context) {
 		UserId:   uid,
 	}
 	utils.DB.Create(&user)
+
+	publishedVideo := models.PublishedVideo{
+		UserID: uid,
+	}
+	utils.DB.Create(publishedVideo)
+
+	favouriteVideo := models.FavouriteVideo{
+		UserID: uid,
+	}
+	utils.DB.Create(favouriteVideo)
 
 	token, err := auth.SetToken(username)
 

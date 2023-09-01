@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-// user struct only for the response of userInfo,
+// UserResponse user struct only for the response of userInfo,
 // not the user struct in models/accounts.gp
 type UserResponse struct {
 	Id            int64  `json:"id"`

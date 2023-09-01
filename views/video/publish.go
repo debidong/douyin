@@ -25,9 +25,9 @@ func GetPublishedVideo(c *gin.Context) {
 		return
 	}
 
-	queryUser := models.User{UserId: userId}
+	var queryUser models.User
 
-	if err := utils.DB.First(&queryUser).Error; err != nil {
+	if err := utils.DB.Where("user_id = ?", userId).First(&queryUser).Error; err != nil {
 		response := publishedVideoListResponse{StatusCode: -1}
 		c.JSON(http.StatusNotFound, response)
 		return
@@ -35,14 +35,11 @@ func GetPublishedVideo(c *gin.Context) {
 
 	var videoList []videoResponse
 
-	for _, VideoPointer := range queryUser.PublishedVideos {
-		publishedVideo := *VideoPointer
-		video := models.Video{VideoID: publishedVideo.VideoID}
-		if err := utils.DB.First(&video).Error; err != nil {
-			response := publishedVideoListResponse{StatusCode: -1}
-			c.JSON(http.StatusNotFound, response)
-			return
-		}
+	var publishedVideos []models.PublishedVideo
+	utils.DB.Where("user_id = ?", userId).Find(&publishedVideos)
+	for _, publishedVideo := range publishedVideos {
+		var video models.Video
+		utils.DB.Where("video_id = ?", publishedVideo.VideoID).First(&video)
 
 		author := models.User{UserId: video.AuthorID}
 		if err := utils.DB.First(&author).Error; err != nil {
@@ -54,7 +51,7 @@ func GetPublishedVideo(c *gin.Context) {
 		authorResponse := user.UserResponse{
 			Id:       author.UserId,
 			Name:     author.Username,
-			IsFollow: false, // will implement later... too many codes here
+			IsFollow: false,
 		}
 
 		videoResponse := videoResponse{
@@ -64,7 +61,7 @@ func GetPublishedVideo(c *gin.Context) {
 			CoverUrl:       video.CoverURL,
 			FavouriteCount: video.FavoriteCount,
 			CommentCount:   video.CommentCount,
-			IsFavourite:    true,
+			IsFavourite:    false,
 			Title:          video.Title,
 		}
 

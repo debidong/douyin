@@ -23,7 +23,13 @@ func InitDB() {
 	}
 
 	DB = database
-	err = DB.AutoMigrate(&models.User{})
+	err = DB.AutoMigrate(
+		&models.User{},
+		&models.Video{},
+		&models.FavouriteVideo{},
+		&models.PublishedVideo{},
+	)
+	
 	if err != nil {
 		fmt.Println(err)
 		return

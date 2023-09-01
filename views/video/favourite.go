@@ -51,14 +51,13 @@ func GetFavouriteVideo(c *gin.Context) {
 
 	var videoList []videoResponse
 
-	for _, VideoPointer := range queryUser.FavouriteVideos {
-		favouriteVideo := *VideoPointer
-		video := models.Video{VideoID: favouriteVideo.VideoID}
-		if err := utils.DB.First(&video).Error; err != nil {
-			response := favouriteVideoListResponse{StatusCode: -1}
-			c.JSON(http.StatusNotFound, response)
-			return
-		}
+	var favouriteVideos []models.FavouriteVideo
+	utils.DB.Where("user_id = ?", userId).Find(&favouriteVideos)
+
+	for _, favouriteVideo := range favouriteVideos {
+		var video models.Video
+
+		utils.DB.Where("video_id = ?", favouriteVideo.VideoID).First(&video)
 
 		author := models.User{UserId: video.AuthorID}
 		if err := utils.DB.First(&author).Error; err != nil {
