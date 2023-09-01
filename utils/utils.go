@@ -28,8 +28,9 @@ func InitDB() {
 		&models.Video{},
 		&models.FavouriteVideo{},
 		&models.PublishedVideo{},
+		&models.Message{},
 	)
-	
+
 	if err != nil {
 		fmt.Println(err)
 		return

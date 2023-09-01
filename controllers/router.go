@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"douyin/views/message"
 	"douyin/views/relation"
 	"douyin/views/video"
 	"github.com/gin-gonic/gin"
@@ -22,5 +23,6 @@ func InitRouter(r *gin.Engine) {
 	apiRouter.GET("/relation/follower/list/", relation.FollowerList)
 	apiRouter.GET("/relation/follow/list/", relation.FollowList)
 	apiRouter.GET("/relation/friend/list/", relation.FriendList)
-
+	apiRouter.GET("/message/chat/", message.MessageList)
+	apiRouter.POST("/message/action/", message.MessageAction)
 }
