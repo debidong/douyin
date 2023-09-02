@@ -16,13 +16,13 @@ type messageListResponse struct {
 }
 
 type Message struct {
-	ID          int `json:"id"`
-	CreatedAt   time.Time
-	MessageID   int64  `json:"message_id"`
-	ToUserID    int64  `json:"to_user_id"`
-	FromUserID  int64  `json:"from_user_iD"`
-	Content     string `json:"content"`
-	CreatedTime string `json:"created_time"`
+	ID         int `json:"id"`
+	CreatedAt  time.Time
+	MessageID  int64  `json:"message_id"`
+	ToUserID   int64  `json:"to_user_id"`
+	FromUserID int64  `json:"from_user_iD"`
+	Content    string `json:"content"`
+	CreateTime int64  `json:"create_time"`
 }
 
 func MessageList(c *gin.Context) {
@@ -30,7 +30,10 @@ func MessageList(c *gin.Context) {
 	token := c.Query("token")
 	user, err := auth.GetUserFromToken(token)
 	toUserId, err := utils.ParseParamToInt(c, "to_user_id")
-	/*createTime := c.Query("pre_msg_time")*/
+	preMsgTime, err := utils.ParseParamToInt(c, "pre_msg_time")
+	createTime := time.Unix(int64(preMsgTime+1), 0)
+
+	fmt.Println(createTime)
 	if err != nil {
 		resp := messageActionResponse{
 			StatusCode: 1,
@@ -43,8 +46,9 @@ func MessageList(c *gin.Context) {
 
 	//获取双方所有消息
 	var messages []Message
-	if err := utils.DB.Table("messages").Where("from_user_id in (?)", []int64{userId, toId}).
-		/*Where("create_at > ").*/
+	if err := utils.DB.Table("messages").
+		Where("from_user_id in (?)", []int64{userId, toId}).
+		Where("created_at > (?)", createTime).
 		Where("to_user_id in (?)", []int64{userId, toId}).
 		Order("created_at").
 		Find(&messages).Error; err != nil {
@@ -64,7 +68,7 @@ func MessageList(c *gin.Context) {
 
 	//封装查询成功结果
 	for i := range messages {
-		messages[i].CreatedTime = messages[i].CreatedAt.Format("15:04 2006/01/02")
+		messages[i].CreateTime = messages[i].CreatedAt.Unix()
 	}
 
 	resp := messageListResponse{
